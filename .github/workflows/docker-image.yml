@@ -1,26 +1,37 @@
-name: Docker Image CI
+name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-env:
-  TAG_LATEST: ghcr.io/tika-proxy/tika-proxy:latest
-  TAG_DATE: ghcr.io/tika-proxy/tika-proxy:$(date +%s)
+    branches:
+      - main
 
 jobs:
-
-  build:
-
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile -t ${TAG_DATE} -t ${TAG_LATEST}
-    - name: Upload the Docker image
-      run: |
-        docker push $TAG_DATE
-        docker push $TAG_LATEST
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract repository name
+        run: echo "REPO_NAME=$(echo $GITHUB_REPOSITORY | awk -F '/' '{print $2}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Set up Docker tags
+        run: echo "COMMIT_TAG=$(git rev-parse --short=6 HEAD)" >> $GITHUB_ENV
+
+      - name: Build and tag Docker image
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/$REPO_NAME:latest .
+          docker tag ghcr.io/${{ github.repository_owner }}/$REPO_NAME:latest ghcr.io/${{ github.repository_owner }}/$REPO_NAME:$COMMIT_TAG
+
+      - name: Push Docker images to GHCR
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/$REPO_NAME:latest
+          docker push ghcr.io/${{ github.repository_owner }}/$REPO_NAME:$COMMIT_TAG
