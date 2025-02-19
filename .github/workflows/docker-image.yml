@@ -38,3 +38,5 @@ jobs:
         run: |
           docker push ghcr.io/${{ github.repository_owner }}/$REPO_NAME:latest
           docker push ghcr.io/${{ github.repository_owner }}/$REPO_NAME:$COMMIT_TAG
+
+          
