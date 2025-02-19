@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  TAG_LATEST: ghcr.io/tika-proxy/tika-proxy:latest
+  TAG_DATE: ghcr.io/tika-proxy/tika-proxy:$(date +%s)
+
 jobs:
 
   build:
@@ -15,8 +19,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag tika-proxy:$(date +%s) --tag tika-proxy:latest
+      run: docker build . --file Dockerfile --tag $TAG_DATE --tag $TAG_LATEST
     - name: Upload the Docker image
       run: |
-        docker push ghcr.io/tika-proxy/tika-proxy:latest 
-        docker push ghcr.io/tika-proxy/tika-proxy:$(date +%s)
+        docker push $TAG_DATE
+        docker push $TAG_LATEST
